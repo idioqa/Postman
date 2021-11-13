@@ -1,0 +1,619 @@
+{
+	"info": {
+		"_postman_id": "44b6e909-2ee6-43ef-b986-bd0159c9a90e",
+		"name": "secong api tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "/login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200)\r",
+							"})\r",
+							"\r",
+							"pm.test(\"Get Token\", function () {\r",
+							"    let json = pm.response.json();\r",
+							"    console.log(json.token);\r",
+							"\r",
+							"    pm.collectionVariables.set(\"token_req\", json.token)\r",
+							"})\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "login",
+							"value": "quality2",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "assurance",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://162.55.220.72:5005/login",
+					"protocol": "http",
+					"host": [
+						"162",
+						"55",
+						"220",
+						"72"
+					],
+					"port": "5005",
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/user_info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200)\r",
+							"})\r",
+							"\r",
+							"const respJson = pm.response.json();\r",
+							"console.log(respJson);\r",
+							"\r",
+							"let Ajv = require('ajv');\r",
+							"let ajv = new Ajv({ logger: console, allErrors: true });\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"required\": [\r",
+							"        \"person\",\r",
+							"        \"qa_salary_after_12_months\",\r",
+							"        \"qa_salary_after_6_months\",\r",
+							"        \"start_qa_salary\"\r",
+							"    ],\r",
+							"    \"properties\":{\r",
+							"        \"person\": {\r",
+							"            \"type\":\"object\",\r",
+							"            \"properties\": {\r",
+							"                \"u_age\": {\"type\": \"integer\"},\r",
+							"                \"u_name\": {\r",
+							"                    \"type\": \"array\",\r",
+							"                    \"items\": [{type: \"string\"}, {type: \"integer\"}, {type: \"integer\"}]\r",
+							"                },\r",
+							"                \"u_salary_1_5_year\": {\"type\": \"integer\"}\r",
+							"            }\r",
+							"        },\r",
+							"        \"qa_salary_after_12_months\":{\r",
+							"            \"$id\": \"#/properties/qa_salary_after_12_months\",\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"qa_salary_after_6_months\":{\r",
+							"            \"$id\": \"#/properties/qa_salary_after_6_months\",\r",
+							"            \"type\": \"integer\"\r",
+							"        },\r",
+							"        \"start_qa_salary\":{\r",
+							"            \"$id\": \"#/properties/start_qa_salary\",\r",
+							"            \"type\": \"integer\",\r",
+							"        }\r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"pm.test(\"Check json\", function() {\r",
+							"    pm.expect(ajv.validate(schema, respJson), JSON.stringify(ajv.errors)).to.be.true;\r",
+							"})\r",
+							"\r",
+							"//3) В ответе указаны коэффициенты умножения salary, напишите тесты по проверке правильности результата перемножения на коэффициент.\r",
+							"pm.test(\"Multiply salaries\", function() {\r",
+							"    pm.expect(respJson.start_qa_salary * 2).to.eql(+respJson.qa_salary_after_6_months);\r",
+							"    pm.expect(respJson.start_qa_salary * 2.9).to.eql(respJson.qa_salary_after_12_months);\r",
+							"    pm.expect(respJson.start_qa_salary * 4).to.eql(respJson.person.u_salary_1_5_year);\r",
+							"})\r",
+							"\r",
+							"//4) Достать значение из поля 'u_salary_1.5_year' и передать в поле salary запроса http://162.55.220.72:5005/get_test_user\r",
+							"pm.environment.set(\"salary_1.5_year\", respJson.person.u_salary_1_5_year);\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"age\": {{age}}, \"salary\": {{salary}}, \"name\": \"{{name}}\", \"auth_token\": \"{{token_req}}\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/user_info",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"user_info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/new_data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200)\r",
+							"})\r",
+							"\r",
+							"const respJson = pm.response.json();\r",
+							"console.log(respJson);\r",
+							"\r",
+							"let Ajv = require('ajv');\r",
+							"let ajv = new Ajv({ logger: console, allErrors: true });\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"required\": [\r",
+							"        \"age\",\r",
+							"        \"name\",\r",
+							"        \"salary\"\r",
+							"    ],\r",
+							"    \"properties\":{\r",
+							"        \"age\":{\r",
+							"            \"$id\": \"#/properties/age\",\r",
+							"            \"type\": \"integer\"\r",
+							"        },\r",
+							"        \"name\":{\r",
+							"            \"$id\": \"#/properties/name\",\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"salary\":{\r",
+							"            \"$id\": \"#/properties/salary\",\r",
+							"            \"type\": \"array\",\r",
+							"            \"items\": [{type: \"integer\"}, {type: \"string\"}]\r",
+							"        }\r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"pm.test(\"Check json\", function() {\r",
+							"    pm.expect(ajv.validate(schema, respJson), JSON.stringify(ajv.errors)).to.be.true;\r",
+							"})\r",
+							"\r",
+							"//3) В ответе указаны коэффициенты умножения salary, напишите тесты по проверке правильности результата перемножения на коэффициент.\r",
+							"pm.test(\"Multiply salaries\", function() {\r",
+							"    pm.expect(respJson.salary[0] * 2).to.eql(+respJson.salary[1]);\r",
+							"    pm.expect(respJson.salary[0] * 3).to.eql(+respJson.salary[2]);\r",
+							"})\r",
+							"\r",
+							"//4) проверить, что 2-й элемент массива salary больше 1-го и 0-го\r",
+							"pm.test(\"Salary comparsion\", function() {\r",
+							"    pm.expect(+respJson.salary[0]).to.lessThan(+respJson.salary[1]);\r",
+							"    pm.expect(+respJson.salary[1]).to.lessThan(+respJson.salary[2]);\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "name",
+							"value": "{{name}}",
+							"type": "text"
+						},
+						{
+							"key": "age",
+							"value": "{{age}}",
+							"type": "text"
+						},
+						{
+							"key": "salary",
+							"value": "{{salary}}",
+							"type": "text"
+						},
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/new_data",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"new_data"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/test_pet_info",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200)\r",
+							"})\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"const respJson = pm.response.json();\r",
+							"console.log(respJson);\r",
+							"\r",
+							"let Ajv = require('ajv');\r",
+							"let ajv = new Ajv({ logger: console, allErrors: true });\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"required\": [\r",
+							"        \"age\",\r",
+							"        \"name\",\r",
+							"        \"daily_food\",\r",
+							"        \"daily_sleep\"\r",
+							"    ],\r",
+							"    \"properties\":{\r",
+							"        \"age\":{\r",
+							"            \"$id\": \"#/properties/age\",\r",
+							"            \"type\": \"integer\"\r",
+							"        },\r",
+							"        \"name\":{\r",
+							"            \"$id\": \"#/properties/name\",\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"daily_food\": {\r",
+							"            \"$id\": \"#/properties/daily_food\",\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"daily_sleep\": {\r",
+							"            \"$id\": \"#/properties/daily_sleep\",\r",
+							"            \"type\": \"number\"\r",
+							"        }\r",
+							"        \r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"pm.test(\"Check json\", function() {\r",
+							"    pm.expect(ajv.validate(schema, respJson), JSON.stringify(ajv.errors)).to.be.true;\r",
+							"})\r",
+							"\r",
+							"//3) В ответе указаны коэффициенты умножения weight, напишите тесты по проверке правильности результата перемножения на коэффициент.\r",
+							"let weight;\r",
+							"pm.request.body.toJSON().formdata.forEach( (el) => { (el.key == \"weight\") ? weight = el.value : 0 })\r",
+							"\r",
+							"pm.test(\"Check daily_food\", function() {\r",
+							"    pm.expect(respJson.daily_food).to.eql(weight * 0.012);\r",
+							"})\r",
+							"\r",
+							"pm.test(\"Check daily_sleep\", function() {\r",
+							"    pm.expect(respJson.daily_sleep).to.eql(weight * 2.5);\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "age",
+							"value": "{{age}}",
+							"type": "text"
+						},
+						{
+							"key": "name",
+							"value": "{{name}}",
+							"type": "text"
+						},
+						{
+							"key": "weight",
+							"value": "{{weight}}",
+							"type": "text"
+						},
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/test_pet_info",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"test_pet_info"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/get_test_user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200);\r",
+							"})\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"const respJson = pm.response.json();\r",
+							"console.log(respJson);\r",
+							"\r",
+							"let Ajv = require('ajv');\r",
+							"let ajv = new Ajv({ logger: console, allErrors: true });\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"required\": [\r",
+							"        \"age\",\r",
+							"        \"name\",\r",
+							"        \"salary\",\r",
+							"        \"family\"\r",
+							"    ],\r",
+							"    \"properties\":{\r",
+							"        \"age\":{\r",
+							"            \"$id\": \"#/properties/age\",\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"name\":{\r",
+							"            \"$id\": \"#/properties/name\",\r",
+							"            \"type\": \"string\"\r",
+							"        },\r",
+							"        \"salary\": {\r",
+							"            \"$id\": \"#/properties/salary\",\r",
+							"            \"type\": \"number\"\r",
+							"        },\r",
+							"        \"family\": {\r",
+							"            \"type\": \"object\",\r",
+							"            \"properties\": {\r",
+							"                \"children\": {\r",
+							"                \"$id\": \"#/properties/children\",\r",
+							"                \"type\": \"array\",\r",
+							"                \"items\": [{\"type\": \"array\", \"items\": [{type: \"string\"}, {type: \"integer\"}] }]   \r",
+							"                },\r",
+							"                \"u_salary_1_5_year\": {\"type\": \"integer\"}\r",
+							"            }\r",
+							"        }\r",
+							"      \r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"pm.test(\"Check json\", function() {\r",
+							"    pm.expect(ajv.validate(schema, respJson), JSON.stringify(ajv.errors)).to.be.true;\r",
+							"})\r",
+							"\r",
+							"//3) Проверить что занчение поля name = значению переменной name из окружения\r",
+							"pm.test(\"Check name\", function() {\r",
+							"    pm.expect(respJson.name).to.eql(pm.environment.get(\"name\"));\r",
+							"})\r",
+							"\r",
+							"//4) Проверить что занчение поля age в ответе соответсвует отправленному в запросе значению поля age\r",
+							"let age;\r",
+							"pm.request.body.toJSON().formdata.forEach( (el) => { (el.key == \"age\") ? age = el.value : 0 })\r",
+							"\r",
+							"pm.test(\"Check age\", function() {\r",
+							"    pm.expect(respJson.age).to.eql(age);\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "age",
+							"value": "{{age}}",
+							"type": "text"
+						},
+						{
+							"key": "salary",
+							"value": "{{salary_1.5_year}}",
+							"type": "text"
+						},
+						{
+							"key": "name",
+							"value": "{{name}}",
+							"type": "text"
+						},
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/get_test_user",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"get_test_user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/currency",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) Можете взять любой объект из присланного списка, используйте js random.\r",
+							"const items = pm.response.json();\r",
+							"let item = items[Math.floor(Math.random()*items.length)];\r",
+							"console.log(item);\r",
+							"\r",
+							"//2)В объекте возьмите Cur_ID и передать через окружение в следующий запрос.\r",
+							"pm.environment.set(\"cur_id\", item.Cur_ID);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/currency",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"currency"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/curr_byn",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//Статус код 200\r",
+							"pm.test(\"Success\", function() {\r",
+							"    pm.response.to.have.status(200)\r",
+							"})\r",
+							"\r",
+							"\r",
+							"//2) Проверка структуры json в ответе.\r",
+							"const respJson = pm.response.json();\r",
+							"console.log(respJson);\r",
+							"\r",
+							"let Ajv = require('ajv');\r",
+							"let ajv = new Ajv({ logger: console, allErrors: true });\r",
+							"const schema = {\r",
+							"    \"type\":\"object\",\r",
+							"    \"required\": [\r",
+							"        \"Cur_Abbreviation\",\r",
+							"        \"Cur_ID\",\r",
+							"        \"Cur_Name\",\r",
+							"        \"Cur_OfficialRate\",\r",
+							"        \"Cur_Scale\",\r",
+							"        \"Date\"\r",
+							"    ],\r",
+							"    \"properties\":{\r",
+							"        \"Cur_Abbreviation\":{\"type\": \"string\"},\r",
+							"        \"Cur_ID\":{\"type\": \"integer\"},\r",
+							"        \"Cur_Name\":{\"type\": \"string\"},\r",
+							"        \"Cur_OfficialRate\":{\"type\": \"number\"},\r",
+							"        \"Cur_Scale\":{\"type\": \"integer\"},\r",
+							"        \"Date\":{\"type\": \"string\"}       \r",
+							"    }\r",
+							"}\r",
+							"\r",
+							"pm.test(\"Check json\", function() {\r",
+							"    pm.expect(ajv.validate(schema, respJson), JSON.stringify(ajv.errors)).to.be.true;\r",
+							"})\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						},
+						{
+							"key": "curr_code",
+							"value": "{{cur_id}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/curr_byn",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"curr_byn"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "token_req",
+			"value": ""
+		}
+	]
+}
