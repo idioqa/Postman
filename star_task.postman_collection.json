@@ -1,0 +1,94 @@
+{
+	"info": {
+		"_postman_id": "f5db4a5a-8f84-4953-8e1b-f6169d71aec8",
+		"name": "*** hw",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "***",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//1) получить список валют\r",
+							"//2) итерировать список валют\r",
+							"//3) в каждой итерации отправлять запрос на сервер для получения курса каждой валюты\r",
+							"//4) если возвращается 500 код, переходим к следующей итреации\r",
+							"//5) если получаем 200 код, проверяем response json на наличие поля \"Cur_OfficialRate\"\r",
+							"//6) если поле есть, пишем в консоль инфу про фалюту в виде response\r",
+							"/*{\r",
+							"    \"Cur_Abbreviation\": str\r",
+							"    \"Cur_ID\": int,\r",
+							"    \"Cur_Name\": str,\r",
+							"    \"Cur_OfficialRate\": float,\r",
+							"    \"Cur_Scale\": int,\r",
+							"    \"Date\": str\r",
+							"}*/\r",
+							"//7) переходим к следующей итерации\r",
+							"\r",
+							"const items = pm.response.json();\r",
+							"items.forEach((item) => {\r",
+							"    pm.sendRequest({\r",
+							"        url: pm.environment.get(\"url\") + \"/curr_byn\",\r",
+							"        method: 'POST',\r",
+							"        header: {\r",
+							"            'content-type': 'multipart/form-data'\r",
+							"        },\r",
+							"        body: {\r",
+							"            mode: \"formdata\",\r",
+							"            formdata: [\r",
+							"                {\r",
+							"                    key : \"curr_code\",\r",
+							"                    value: item.Cur_ID\r",
+							"                },\r",
+							"                {\r",
+							"                    key: \"auth_token\",\r",
+							"                    value: pm.environment.get(\"token_req\")\r",
+							"                }\r",
+							"            ]\r",
+							"        }\r",
+							"    }, \r",
+							"    function (err, response) {\r",
+							"        if (err) {\r",
+							"            console.log(error);\r",
+							"        } else {\r",
+							"            if(response.code == 200 && (response.json()).hasOwnProperty(\"Cur_OfficialRate\")) {            \r",
+							"                console.log(JSON.stringify(response.json()));\r",
+							"            }\r",
+							"        }\r",
+							"    })\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "auth_token",
+							"value": "{{token_req}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{url}}/currency",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"currency"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
